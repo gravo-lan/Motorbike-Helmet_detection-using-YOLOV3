@@ -3,6 +3,7 @@ import numpy as np
 from utils import label_map_util
 import tensorflow as tf
 from utils import visualization_utils as vis_util
+import pytesseract
 
 class ObjectDetector:
     def __init__(self, helmet_inference_path, frozen_graph_path, labelmap, number_of_classes):
@@ -124,6 +125,14 @@ def main():
 
         # Visualize detected objects on the frame
         visualise(frame, boxes_helmet, scores_helmet, classes_helmet, category_index_helmet)
+
+        # Extract license plate text using Tesseract OCR
+        for box, score, cls in zip(boxes_helmet[0], scores_helmet[0], classes_helmet[0]):
+            if score > 0.7:  # Adjust the confidence threshold as needed
+                ymin, xmin, ymax, xmax = box
+                plate_image = frame[int(ymin):int(ymax), int(xmin):int(xmax)]
+                plate_text = pytesseract.image_to_string(plate_image, lang='eng', config='--oem 3 --psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
+                print(f"Detected license plate: {plate_text}")
 
         # Display the frame
         cv2.namedWindow("output", cv2.WINDOW_NORMAL)
